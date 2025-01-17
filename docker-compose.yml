@@ -1,0 +1,60 @@
+version: '3'
+services:
+  watashiga-nginx-new:
+    container_name: "watashiga-nginx-new"
+    build:
+      context: ./docker/nginx
+    depends_on:
+      - watashiga-app-new
+    ports:
+      - 80:80
+    volumes:
+      - ./:/src
+      - ./docker/nginx:/etc/nginx/conf.d
+
+  watashiga-app-new:
+    container_name: "watashiga-app-new"
+    build:
+      context: ./docker/php
+    environment:
+      DB_HOST: watashiga-mysql-new
+    depends_on:
+      - watashiga-mysql-new
+    volumes:
+      - ./sourceCode:/src
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+      - ./docker/php/worker.conf:/etc/supervisor/conf.d/worker.conf
+
+  watashiga-mysql-new:
+    image: mysql:8.0
+    container_name: watashiga-mysql-new
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=watashiga
+      - TZ=Asia/Tokyo
+    ports:
+      - 3306:3306
+
+  # watashiga-redis:
+  #   image: redis:alpine
+  #   container_name: "watashiga-redis"
+  #   ports:
+  #     - 16379:6379
+
+  # watashiga-phpmyadmin:
+  #   image: phpmyadmin/phpmyadmin
+  #   container_name: watashiga-pma
+  #   links:
+  #     - watashiga-mysql-new
+  #   environment:
+  #     PMA_HOST:  watashiga-mysql-new
+  #     MYSQL_ROOT_PASSWORD : root
+  #     PMA_ARBITRARY: 1
+  #     UPLOAD_LIMIT: 300M
+  #   restart: always
+  #   ports:
+  #     - 8081:80
